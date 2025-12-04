@@ -21,7 +21,7 @@ This project analyzes menu and pricing data from QuickSip, a coffee shop in Pitt
 ## Data Source
 
 - **Website Scraped:** https://quicksip.co/menu
-- **Date Scraped:** December 1, 2026
+- **Date Scraped:** December 1, 2025
 
 All data was extracted using publicly available links and the requests library in Python.
 
