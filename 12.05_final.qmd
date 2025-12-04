@@ -1,0 +1,218 @@
+---
+title: "Final Project"
+author: "Ashley Marietta"
+format:
+  html:
+    toc: true
+    toc-location: left
+    self-contained: true
+jupyter: python3
+---
+https://quicksip.co/menu
+Using this website which contains the menu for my favorite coffee shop in my hometown, QuickSip, I want to analyze the following problems:
+1. How many menu items does each major category have, and what does that say about the business focus?
+2. How do seasonal items (fall/holiday/summer drinks) compare in price to the regular menu items?
+
+## READ IN DATA
+```{python}
+#| eval: false
+import requests
+url = 'https://ws-api.toasttab.com/do-federated-gateway/v1/graphql'
+request = requests.post
+payload = [{"operationName":"Restaurant","variables":{"useOOFederatedConfigs":False,"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f"},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"525542dec492a54f5b7112b1fbb8d71b1c1210a8"}}},{"operationName":"PaginatedMenuItems","variables":{"input":{"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f","menuApi":"DO","visibility":"TOAST_ONLINE_ORDERING","respectAvailability":False,"hideOutOfStockItems":False,"channelGuid":"a6dd1036-a70c-4253-9207-631d6ce6759d","offset":0,"filters":None,"requirePagination":False}},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"e429e87160545347ef3608bfcd681a72dbff49df"}}},{"operationName":"PaginatedMenuItems","variables":{"input":{"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f","menuApi":"DO","visibility":"TOAST_ONLINE_ORDERING","respectAvailability":False,"hideOutOfStockItems":False,"offset":0,"filters":None,"requirePagination":False}},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"e429e87160545347ef3608bfcd681a72dbff49df"}}},{"operationName":"loyaltyFeatures","variables":{"input":{"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f","locale":"en-US"}},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"884252f38431e8a38fe86e6e0af7dfdd0c5f2dca"}}},{"operationName":"PaginatedMenuItemsWithPopularItems","variables":{"input":{"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f","menuApi":"DO","visibility":"TOAST_ONLINE_ORDERING","respectAvailability":True,"hideOutOfStockItems":False,"offset":0,"filters":None,"requirePagination":False},"popularItemsInput":{"menusInput":{"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f","menuApi":"DO","visibility":"TOAST_ONLINE_ORDERING","respectAvailability":True,"hideOutOfStockItems":False},"restaurantGuid":"bfff3978-b252-4bc1-9765-df6755ed246f"}},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"96a3da4f2fe8858e7fe5810b963e78db6e814b13"}}}]
+```
+
+```{python}
+#| eval: false
+import requests
+
+url = "https://ws-api.toasttab.com/do-federated-gateway/v1/graphql"
+
+headers = {
+    "content-type": "application/json",
+    "apollographql-client-name": "sites-web-client",
+    "apollographql-client-version": "2717",
+    "origin": "https://quicksip.co",
+    "referer": "https://quicksip.co/",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Safari/605.1.15",
+    "toast-graphql-operation": "PaginatedMenuItems,PaginatedMenuItems,PaginatedMenuItemsWithPopularItems,Restaurant,loyaltyFeatures",
+    "toast-persistent-query-hash": "525542dec492a54f5b7112b1fbb8d71b1c1210a8,e429e87160545347ef3608bfcd681a72dbff49df,e429e87160545347ef3608bfcd681a72dbff49df,884252f38431e8a38fe86e6e0af7dfdd0c5f2dca,96a3da4f2fe8858e7fe5810b963e78db6e814b13",
+    "toast-session-id": "192v0pj1rBoDZit2j9ARiSiLvfLbluh7LEY9wQPdvQ2"
+}
+
+cookies = {"toast-session-id": "192v0pj1rBoDZit2j9ARiSiLvfLbluh7LEY9wQPdvQ2"}
+response = requests.post(url, json=payload, headers=headers, cookies=cookies)
+```
+
+```{python}
+#| eval: false
+import json
+
+json_d = json.dumps(response.json())
+with open("menu.json", "w") as f:
+    json.dump(json_d, f)
+```
+
+```{python}
+data = response.json()
+
+menu_items1 = data[1].get('data', {}).get('paginatedMenuItems', {}).get('items') or []
+menu_items2 = data[2].get('data', {}).get('paginatedMenuItems', {}).get('items') or []
+
+all_items = menu_items1 + menu_items2
+
+for item in all_items:
+    name = item['name']
+    price = item.get('priceMoney', {}).get('amount')
+    print(name, price)
+```
+
+## BREAK DOWN THE DATASET
+```{python}
+# shows most basic keys
+data[4].get('data').keys()
+```
+
+```{python}
+# shows dictionary keys
+data[4].get('data').get('paginatedMenuItems').get("menus")[0].get('groups')[0].keys()
+```
+
+```{python}
+# returns the whole menu in a dictionary format
+data[4].get('data').get('paginatedMenuItems').get("menus")
+```
+
+```{python}
+# returns group list
+data[4].get('data').get('paginatedMenuItems').get("menus")[0].get('groups')[0].get('items')[0]
+```
+
+```{python}
+# returns name of product
+data[4].get('data').get('paginatedMenuItems').get("menus")[0].get('groups')[0].get('items')[0].get('name')
+```
+
+```{python}
+# returns price
+data[4].get('data').get('paginatedMenuItems').get("menus")[0].get('groups')[0].get('items')[0].get('prices')
+```
+
+## EVALUATE BUSINESS FOCUS
+How many menu items does each major category have, and what does that say about the business focus?
+```{python}
+# count number of items in each group
+menus = data[4].get('data').get('paginatedMenuItems').get("menus")
+
+group_counts = {}
+
+for menu in menus:
+    groups = menu.get('groups', [])
+    
+    for g in groups:
+        group_name = g.get("name", "UNKNOWN GROUP")
+        items = g.get("items", [])
+        count = len(items)
+        group_counts[group_name] = group_counts.get(group_name, 0) + count
+
+group_counts
+```
+
+```{python}
+# show menu items in each group
+for menu in menus:
+    for g in menu.get("groups", []):
+        print("\nGROUP:", g.get("name"))
+        for item in g.get("items", []):
+            print("   •", item.get("name"))
+```
+
+```{python}
+# count of menu items by group in a dataframe
+import pandas as pd
+pd.DataFrame(group_counts.items(), columns=["Group", "ItemCount"])
+```
+
+Based solely on the count of menu items, it appears that QuickSip focuses primarily on coffee drinks, which also include a large portion of the holiday, fall, and summer drinks, and on food items. I find this interesting because, while Pittsburg is a small town of around 20,000 residents, it has multiple chain coffee shops, including Starbucks, Scooters, and 7 Brew, and two local coffee shops all on the north side of town. I often see many cars in the parking lots for the other chain coffee shops, but QuickSip is rarely busy. While they do advertise being fast as their business model, I wonder if moving further south near Pittsburg State University or if altering their menu to focus more on food items or smoothies would make more financial sense. I selfishly hope their menu stays the same because I love all of their holiday and fall drinks, but I also would love to see the business thrive!
+
+## BRING IN AVERAGE PRICE BY GROUP
+How do seasonal items (fall/holiday/summer drinks) compare in price to the regular menu items?
+```{python}
+group_avg_prices = {}
+
+def extract_price_dollars(item):
+    prices = item.get("prices", None)
+    if prices is None:
+        return None
+    if isinstance(prices, list):
+        if not prices:
+            return None
+        p = prices[0]
+    else:
+        p = prices
+    if isinstance(p, dict):
+        unit = p.get("unitPrice") or p.get("price") or p.get("unit_price")
+        if isinstance(unit, dict) and "amount" in unit:
+            cents = unit["amount"]
+            if isinstance(cents, (int, float)):
+                return cents
+        if "amount" in p and isinstance(p["amount"], (int, float)):
+            return p["amount"]
+        return None
+    if isinstance(p, (int, float)):
+        return float(p)
+    return None
+
+for menu in menus:
+    for g in menu.get("groups", []):
+        group_name = g.get("name", "UNKNOWN GROUP")
+        items = g.get("items", [])
+
+        if group_name not in group_avg_prices:
+            group_avg_prices[group_name] = {"total_price": 0.0, "count": 0}
+
+        for item in items:
+            price = extract_price_dollars(item)
+            if price is not None:
+                group_avg_prices[group_name]["total_price"] += price
+                group_avg_prices[group_name]["count"] += 1
+
+for group, stats in group_avg_prices.items():
+    if stats["count"] > 0:
+        stats["avg_price"] = round(stats["total_price"] / stats["count"], 2)
+    else:
+        stats["avg_price"] = None
+
+group_avg_prices
+```
+
+```{python}
+import pandas as pd
+
+df_counts = pd.DataFrame(list(group_counts.items()), columns=["Group", "ItemCount"])
+
+df_prices = pd.DataFrame(
+    [{"Group": g, "AvgPrice": v["avg_price"]} for g, v in group_avg_prices.items()]
+)
+
+df_final = df_counts.merge(df_prices, on="Group", how="inner")
+
+df_final
+```
+
+```{python}
+import matplotlib.pyplot as plt
+
+df_plot = df_final.sort_values("AvgPrice", ascending=False)
+
+plt.figure(figsize=(10, 6))
+plt.bar(df_plot["Group"], df_plot["AvgPrice"])
+plt.xticks(rotation=45, ha="right")
+plt.xlabel("Menu Category")
+plt.ylabel("Average Price")
+plt.title("Average Menu Item Price by Category (Highest to Lowest)")
+plt.tight_layout()
+plt.show()
+```
+
+In looking at the average prices for each menu category, it is clear that specialty drinks do have a higher price. Taking into account that the price is for the smallest size without any modifications (such as alternative milks or extra syrups), there could also be some price variability that is not accounted for in specialty beverages that may not be as prevalent for fountain drinks or food. Overall, the menu shows a clear emphasis on higher-priced specialty beverages, suggesting that QuickSip focuses on premium, customizable drink offerings rather than low-cost commodity beverages. As mentioned above, with so many other coffee companies on the same street, I wonder if QuickSip could do better by diversifying more heavily into other product categories or by moving closer to the university.
