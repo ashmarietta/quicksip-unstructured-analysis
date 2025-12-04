@@ -1,2 +1,6 @@
-# quicksip-unstructured-analysis
+# QuickSip Analysis and Business Plan
 This is my final project for my unstructured data course. I scraped a coffee shop website, analyzed price data, and formed business suggestions based on the data.
+Pittsburg, Kansas, is a small town of around 20,000 residents with a medium-sized college called Pittsburg State University on the south side of town. Especially for a town of this small size, it has multiple chain coffee shops, including Starbucks, Scooters, and 7 Brew, and two local coffee shops, all on the north side of town.
+I often see many cars in the parking lots for the other chain coffee shops, but QuickSip, a local, family-owned coffee shop that markets its fast service and large menu as selling points, is rarely as busy.
+Thus, my goal in this project is to analyze what QuickSip’s menu focus is so that I can understand their sales emphasis and how that may be impacted by other businesses nearby.
+To do so, I scraped their website and consolidated the data into a Pandas dataframe. From there, I counted the number of menu items in each major category. Finally, I compared the average pricing of each category of menu items, including seasonal drinks like holiday, fall, and summer beverages, to see which of those could be a potential area of business focus.
